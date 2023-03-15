@@ -13,69 +13,91 @@ from getpass import getpass
 
 
 # FOR TESTING ==================
-#username = ''
-#password = ''
+# username = ''
+# password = ''
 # ==============================
 
 ELEMENTS_TIMEOUT = 15
 FOLLOW_DATA_LOADING_TIMEOUT = 50
 
+IG_BASE_URL = "https://www.instagram.com/"
+IG_LOGIN_URL = "https://www.instagram.com/accounts/login/"
+IG_ACCOUNT_URL = "https://www.instagram.com/{}/"
+IG_FOLLOWERS_URL = "https://www.instagram.com/{}/followers/"
 
-def scrape(): 
 
-    username = input('Enter Your Username: ')
-    password = input('Enter Your Password: ')
-
-
+def init():
+    username = input("Enter Your Username: ")
+    password = input("Enter Your Password: ")
 
     options = webdriver.ChromeOptions()
     # TODO: invoking in headless removes need for GUI
+
     # options.add_argument("--headless")
-    options.add_argument('--no-sandbox')
+    options.add_argument("--no-sandbox")
     options.add_argument("--lang=en")
     options.add_argument("--log-level=3")
     options.add_experimental_option("detach", True)
 
+    dir_path = os.path.join(os.getcwd(), "selenium")
+    options.add_argument(f"--user-data-dir={dir_path}")
+
     mobile_emulation = {
-        "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.0.0 Safari/535.19"}
+        "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.0.0 Safari/535.19"
+    }
     options.add_experimental_option("mobileEmulation", mobile_emulation)
 
     bot = webdriver.Chrome(executable_path=CM().install(), options=options)
     bot.set_window_size(600, 1000)
 
-    bot.get('https://www.instagram.com/')
+    bot.get(IG_LOGIN_URL)
 
     time.sleep(2)
 
+    if bot.current_url == IG_BASE_URL:
+        scrape(bot)
+    else:
+        login(bot, username, password)
+
+
+def login(bot, username, password):
     print("Logging in...")
 
     user_element = WebDriverWait(bot, ELEMENTS_TIMEOUT).until(
-        EC.presence_of_element_located((
-            By.XPATH, '//*[@id="loginForm"]/div/div[1]/div/label/input')))
-            
+        EC.presence_of_element_located(
+            (By.XPATH, '//*[@id="loginForm"]/div/div[1]/div/label/input')
+        )
+    )
 
     user_element.send_keys(username)
 
     pass_element = WebDriverWait(bot, ELEMENTS_TIMEOUT).until(
-        EC.presence_of_element_located((
-            By.XPATH, '//*[@id="loginForm"]/div/div[2]/div/label/input')))
+        EC.presence_of_element_located(
+            (By.XPATH, '//*[@id="loginForm"]/div/div[2]/div/label/input')
+        )
+    )
 
     pass_element.send_keys(password)
 
     login_button = WebDriverWait(bot, ELEMENTS_TIMEOUT).until(
-        EC.presence_of_element_located((
-            By.XPATH, '//*[@id="loginForm"]/div/div[3]/button')))
+        EC.presence_of_element_located(
+            (By.XPATH, '//*[@id="loginForm"]/div/div[3]/button')
+        )
+    )
 
     time.sleep(0.4)
-
 
     login_button.click()
 
     time.sleep(5)
 
-    user_target = input('Enter Your Target Username: ')
+    scrape(bot)
 
-    bot.get('https://www.instagram.com/{}/'.format(user_target))
+
+def scrape(bot):
+    user_target = input("Enter Your Target Username: ")
+
+    bot.get(IG_ACCOUNT_URL.format(user_target))
 
     time.sleep(5)
 
@@ -84,37 +106,41 @@ def scrape():
 
     # print('Followers: ' + str(num_followers))
 
-
-    target_followers=int(input('Enter How many followers you want to scrape (make sure the value is integer): '))
-
-
+    target_followers = int(
+        input(
+            "Enter How many followers you want to scrape (make sure the value is integer): "
+        )
+    )
 
     # getting followers
     if target_followers > 0:
-        bot.get('https://www.instagram.com/{}/followers/'.format(user_target))
+        bot.get(IG_FOLLOWERS_URL.format(user_target))
 
         time.sleep(3.5)
 
-        ActionChains(bot).key_down(Keys.SHIFT).send_keys(Keys.TAB).key_up(Keys.SHIFT).perform()
-        ActionChains(bot).key_down(Keys.SHIFT).send_keys(Keys.TAB).key_up(Keys.SHIFT).perform()
+        ActionChains(bot).key_down(Keys.SHIFT).send_keys(Keys.TAB).key_up(
+            Keys.SHIFT
+        ).perform()
+        ActionChains(bot).key_down(Keys.SHIFT).send_keys(Keys.TAB).key_up(
+            Keys.SHIFT
+        ).perform()
 
-    print('Scraping followers...')
+    print("Scraping followers...")
 
     followers = set()
 
     not_loading_count = 0
     prev = 0
     while len(followers) < target_followers:
-
         ActionChains(bot).send_keys(Keys.END).perform()
 
         time.sleep(5)
 
         more_followers = bot.find_elements(By.XPATH, '//*/div[@role="button"]/a')
-        
+
         followers.update(more_followers)
 
-        #print(len(followers))
+        # print(len(followers))
         if len(followers) == prev:
             not_loading_count += 1
         else:
@@ -126,23 +152,24 @@ def scrape():
     users_followers = set()
     c = 0
     for i in followers:
-        if i.get_attribute('href'):
+        if i.get_attribute("href"):
             c += 1
-            follower = i.get_attribute('href').split("/")[3]
-            print(i.get_attribute('href'))
+            follower = i.get_attribute("href").split("/")[3]
+            print(i.get_attribute("href"))
             users_followers.add(follower)
-            #print (c, ' ', follower)
+            # print (c, ' ', follower)
         else:
-            continue        
+            continue
 
-    print('Saving to file...')
-    print('[DONE] - Your followers are saved in usernames.txt file')
+    print("Saving to file...")
+    print("[DONE] - Your followers are saved in usernames.txt file")
 
-    with open('infos/usernames.txt', 'w') as file:
-        file.write('\n'.join(users_followers) + "\n")
+    with open("infos/usernames.txt", "w") as file:
+        file.write("\n".join(users_followers) + "\n")
 
-    print('Exiting...')
+    print("Exiting...")
     bot.quit()
 
-if __name__ == '__main__':
-    scrape()
+
+if __name__ == "__main__":
+    init()

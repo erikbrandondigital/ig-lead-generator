@@ -132,3 +132,6 @@ dmypy.json
 infos/accounts.json
 infos/messages.txt
 infos/usernames.txt
+
+# Exclude Chrome Profile Data
+selenium
