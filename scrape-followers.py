@@ -164,7 +164,10 @@ def scrape(bot):
     print("Saving to file...")
     print("[DONE] - Your followers are saved in usernames.txt file")
 
-    with open("infos/usernames.txt", "w") as file:
+    timestamp = time.strftime("%m-%d-%Y-%H%M%S")
+    export_file_name = f"infos/{user_target}-follower-usernames-{timestamp}.txt"
+
+    with open(export_file_name, "w") as file:
         file.write("\n".join(users_followers) + "\n")
 
     print("Exiting...")

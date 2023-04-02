@@ -23,7 +23,7 @@ FOLLOW_DATA_LOADING_TIMEOUT = 50
 IG_BASE_URL = "https://www.instagram.com/"
 IG_LOGIN_URL = "https://www.instagram.com/accounts/login/"
 IG_ACCOUNT_URL = "https://www.instagram.com/{}/"
-IG_FOLLOWINGS_URL = "https://www.instagram.com/{}/followings/"
+IG_FOLLOWINGS_URL = "https://www.instagram.com/{}/following/"
 
 
 def init():
@@ -164,7 +164,10 @@ def scrape(bot):
     print("Saving to file...")
     print("[DONE] - Your followings are saved in usernames.txt file")
 
-    with open("infos/usernames.txt", "w") as file:
+    timestamp = time.strftime("%m-%d-%Y-%H%M%S")
+    export_file_name = f"infos/{user_target}-following-usernames-{timestamp}.txt"
+
+    with open(export_file_name, "w") as file:
         file.write("\n".join(users_followings) + "\n")
 
     print("Exiting...")
