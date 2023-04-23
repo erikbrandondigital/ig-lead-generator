@@ -2,10 +2,13 @@
 import os
 import sys
 import time
+import shutil
 import selenium
 import PySimpleGUI as sg
 from requests import get
 from selenium import webdriver
+from selenium.webdriver.chrome.service import Service as ChromeService
+from subprocess import CREATE_NO_WINDOW
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.action_chains import ActionChains
@@ -26,6 +29,7 @@ FOLLOW_DATA_LOADING_TIMEOUT = 50
 IG_BASE_URL = "https://www.instagram.com/"
 IG_LOGIN_URL = "https://www.instagram.com/accounts/login/"
 IG_ACCOUNT_URL = "https://www.instagram.com/{}/"
+IG_FOLLOWERS_URL = "https://www.instagram.com/{}/followers/"
 IG_FOLLOWINGS_URL = "https://www.instagram.com/{}/following/"
 
 
@@ -42,13 +46,19 @@ def initGUI():
             sg.InputText(key="quantity", enable_events=True, default_text="50"),
         ],
         [
-            sg.Button("Scrape", key="submit", enable_events=True, disabled=True),
+            sg.Button(
+                "Scrape Followers", key="followers", enable_events=True, disabled=True
+            ),
+            sg.Button(
+                "Scrape Followings", key="followings", enable_events=True, disabled=True
+            ),
+            sg.Button("Reset Browser", key="reset", enable_events=True),
             sg.Button("Exit", key="exit"),
             sg.Text("", key="loading_text"),
         ],
     ]
 
-    window = sg.Window("Scrape Followings", layout)
+    window = sg.Window("Instagram Scraper", layout, keep_on_top=True)
 
     while True:
         input_fields_complete = False
@@ -104,12 +114,18 @@ def initGUI():
                 input_fields_complete = True
 
         if input_fields_complete:
-            window.find_element("submit").Update(disabled=False)
-        else:
-            window.find_element("submit").Update(disabled=True)
+            window.find_element("followers").Update(disabled=False)
+            window.find_element("followings").Update(disabled=False)
 
-        if event == "submit":
-            window["loading_text"]("Scraping Target...")
+        else:
+            window.find_element("followers").Update(disabled=True)
+            window.find_element("followings").Update(disabled=True)
+
+        if event == "reset":
+            clearSelenium()
+
+        if event == "followers" or event == "followings":
+            window["loading_text"](f"Scraping Target {event.capitalize()}...")
             window.Disable()
 
             window.perform_long_operation(
@@ -118,6 +134,7 @@ def initGUI():
                     values["password"],
                     values["target"],
                     int(values["quantity"]),
+                    event,
                 ),
                 "done",
             )
@@ -129,9 +146,9 @@ def initGUI():
             window.Enable()
 
 
-def init(username, password, target, quantity):
+def init(username, password, target, quantity, mode):
     # username = input("Enter Your Username: ")
-    # password = getpass.getpass("Enter Your Password: ")
+    # password = input("Enter Your Password: ")
 
     options = webdriver.ChromeOptions()
     # TODO: invoking in headless removes need for GUI
@@ -150,7 +167,12 @@ def init(username, password, target, quantity):
     }
     options.add_experimental_option("mobileEmulation", mobile_emulation)
 
-    bot = webdriver.Chrome(executable_path=CM().install(), options=options)
+    chrome_service = ChromeService("chromedriver")
+    chrome_service.creation_flags = CREATE_NO_WINDOW
+
+    bot = webdriver.Chrome(
+        executable_path=CM().install(), options=options, service=chrome_service
+    )
     bot.set_window_size(600, 1000)
 
     bot.get(IG_LOGIN_URL)
@@ -158,12 +180,12 @@ def init(username, password, target, quantity):
     time.sleep(2)
 
     if bot.current_url == IG_BASE_URL:
-        scrape(bot, target, quantity)
+        scrape(bot, target, quantity, mode)
     else:
-        login(bot, username, password, target, quantity)
+        login(bot, username, password, target, quantity, mode)
 
 
-def login(bot, username, password, target, quantity):
+def login(bot, username, password, target, quantity, mode):
     print("Logging in...")
 
     user_element = WebDriverWait(bot, ELEMENTS_TIMEOUT).until(
@@ -196,10 +218,10 @@ def login(bot, username, password, target, quantity):
 
     time.sleep(10)
 
-    scrape(bot, target, quantity)
+    scrape(bot, target, quantity, mode)
 
 
-def scrape(bot, target, quantity):
+def scrape(bot, target, quantity, mode):
     # target = input("Enter Your Target Username: ")
 
     bot.get(IG_ACCOUNT_URL.format(target))
@@ -207,19 +229,22 @@ def scrape(bot, target, quantity):
     time.sleep(5)
 
     # stats = bot.find_elements_by_class_name("_ac2a")
-    # num_followings = float((stats[1].text).replace(',', '.'))
+    # num_followers = float((stats[1].text).replace(',', '.'))
 
-    # print('followings: ' + str(num_followings))
+    # print('Followers: ' + str(num_followers))
 
     # quantity = int(
     #     input(
-    #         "Enter How many followings you want to scrape (make sure the value is integer): "
+    #         "Enter How many followers you want to scrape (make sure the value is integer): "
     #     )
     # )
 
-    # getting followings
+    # getting followers
     if quantity > 0:
-        bot.get(IG_FOLLOWINGS_URL.format(target))
+        if mode == "followers":
+            bot.get(IG_FOLLOWERS_URL.format(target))
+        else:
+            bot.get(IG_FOLLOWINGS_URL.format(target))
 
         time.sleep(3.5)
 
@@ -230,53 +255,61 @@ def scrape(bot, target, quantity):
             Keys.SHIFT
         ).perform()
 
-    print("Scraping followings...")
+    print("Scraping...")
 
-    followings = set()
+    accounts = set()
 
     not_loading_count = 0
     prev = 0
-    while len(followings) < quantity:
+    while len(accounts) < quantity:
         ActionChains(bot).send_keys(Keys.END).perform()
 
         time.sleep(5)
 
-        more_followings = bot.find_elements(By.XPATH, '//*/div[@role="button"]/a')
+        more_accounts = bot.find_elements(By.XPATH, '//*/div[@role="button"]/a')
 
-        followings.update(more_followings)
+        accounts.update(more_accounts)
 
-        # print(len(followings))
-        if len(followings) == prev:
+        # print(len(followers))
+        if len(accounts) == prev:
             not_loading_count += 1
         else:
             not_loading_count = 0
         if not_loading_count == FOLLOW_DATA_LOADING_TIMEOUT:
             break
-        prev = len(followings)
+        prev = len(accounts)
 
-    users_followings = set()
+    user_accounts = set()
     c = 0
-    for i in followings:
+    for i in accounts:
         if i.get_attribute("href"):
             c += 1
-            follower = i.get_attribute("href").split("/")[3]
+            account = i.get_attribute("href").split("/")[3]
             print(i.get_attribute("href"))
-            users_followings.add(follower)
+            user_accounts.add(account)
             # print (c, ' ', follower)
         else:
             continue
 
     print("Saving to file...")
-    print("[DONE] - Your followings are saved in usernames.txt file")
+    print(
+        "[DONE] - Your scraped accounts have been saved in the data > scraper folder."
+    )
 
-    timestamp = time.strftime("%m-%d-%Y-%H%M%S")
-    export_file_name = f"infos/{target}-following-usernames-{timestamp}.txt"
+    export_file_name = f"data/{target}-{mode}-usernames.txt"
 
     with open(export_file_name, "w") as file:
-        file.write("\n".join(users_followings) + "\n")
+        for user in user_accounts:
+            file.write(user + "\n")
+        file.close()
 
     print("Exiting...")
     bot.quit()
+
+
+def clearSelenium():
+    dir_path = os.path.join(os.getcwd(), "selenium")
+    shutil.rmtree(dir_path, ignore_errors=True)
 
 
 if __name__ == "__main__":
