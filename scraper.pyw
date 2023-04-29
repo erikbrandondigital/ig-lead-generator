@@ -3,6 +3,7 @@ import os
 import sys
 import time
 import shutil
+import json
 import selenium
 import PySimpleGUI as sg
 from requests import get
@@ -24,7 +25,7 @@ from getpass import getpass
 # ==============================
 
 ELEMENTS_TIMEOUT = 15
-FOLLOW_DATA_LOADING_TIMEOUT = 50
+FOLLOW_DATA_LOADING_TIMEOUT = 6
 
 IG_BASE_URL = "https://www.instagram.com/"
 IG_LOGIN_URL = "https://www.instagram.com/accounts/login/"
@@ -35,8 +36,6 @@ IG_FOLLOWINGS_URL = "https://www.instagram.com/{}/following/"
 
 def initGUI():
     layout = [
-        [sg.Text("Username:"), sg.InputText(key="username", enable_events=True)],
-        [sg.Text("Password:"), sg.InputText(key="password", password_char="*")],
         [
             sg.Text("Target Account:"),
             sg.InputText(key="target", enable_events=True),
@@ -68,17 +67,6 @@ def initGUI():
             sys.exit()
 
         if (
-            event == "username"
-            and values["username"]
-            and values["username"][-1]
-            not in ("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789._")
-        ):
-            window["username"].update(values["username"][:-1])
-
-        if event == "username" and len(values["username"]) > 30:
-            window["username"].update(values["username"][:-1])
-
-        if (
             event == "target"
             and values["target"]
             and values["target"][-1]
@@ -99,18 +87,8 @@ def initGUI():
         if event == "quantity" and len(values["quantity"]) > 4:
             window["quantity"].update(values["quantity"][:-1])
 
-        if (
-            event == "username"
-            or event == "password"
-            or event == "target"
-            or event == "quantity"
-        ):
-            if (
-                len(values["username"])
-                and len(values["password"])
-                and len(values["target"])
-                and len(values["quantity"]) > 0
-            ):
+        if event == "target" or event == "quantity":
+            if len(values["target"]) and len(values["quantity"]) > 0:
                 input_fields_complete = True
 
         if input_fields_complete:
@@ -130,8 +108,6 @@ def initGUI():
 
             window.perform_long_operation(
                 lambda: init(
-                    values["username"],
-                    values["password"],
                     values["target"],
                     int(values["quantity"]),
                     event,
@@ -146,9 +122,23 @@ def initGUI():
             window.Enable()
 
 
-def init(username, password, target, quantity, mode):
-    # username = input("Enter Your Username: ")
-    # password = input("Enter Your Password: ")
+def init(target, quantity, mode):
+    with open("data/config/account.json") as file:
+        missing_credentials = False
+        account = json.load(file)
+        username = account[0]["username"]
+        password = account[0]["password"]
+        if not username:
+            print("Error: Username not set in account config.")
+            missing_credentials = True
+        if not password:
+            print("Error: Password not set in account config.")
+            missing_credentials = True
+        if missing_credentials:
+            print(
+                "Make sure the account credentials you entered are correct in > 'data/config/account.json'"
+            )
+        file.close()
 
     options = webdriver.ChromeOptions()
     # TODO: invoking in headless removes need for GUI
@@ -279,17 +269,19 @@ def scrape(bot, target, quantity, mode):
             break
         prev = len(accounts)
 
-    user_accounts = set()
+    user_accounts = list()
     c = 0
     for i in accounts:
         if i.get_attribute("href"):
             c += 1
             account = i.get_attribute("href").split("/")[3]
             print(i.get_attribute("href"))
-            user_accounts.add(account)
+            user_accounts.append(account)
             # print (c, ' ', follower)
         else:
             continue
+
+    user_accounts = user_accounts[:quantity]
 
     print("Saving to file...")
     print(
@@ -303,8 +295,9 @@ def scrape(bot, target, quantity, mode):
             file.write(user + "\n")
         file.close()
 
-    print("Exiting...")
+    print("Cleaning Up...")
     bot.quit()
+    print("Waiting for orders...")
 
 
 def clearSelenium():

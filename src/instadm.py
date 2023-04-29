@@ -12,6 +12,8 @@ import sqlite3
 import os
 
 DEFAULT_IMPLICIT_WAIT = 1
+IG_BASE_URL = "https://www.instagram.com/"
+IG_LOGIN_URL = "https://www.instagram.com/accounts/login/"
 
 
 class InstaDM(object):
@@ -89,8 +91,11 @@ class InstaDM(object):
 
     def login(self, username, password):
         # homepage
-        self.driver.get("https://instagram.com/?hl=en")
+        self.driver.get(IG_LOGIN_URL)
         self.__random_sleep__(3, 5)
+        if self.driver.current_url == IG_BASE_URL:
+            print("Already Logged In. Skipping Login...")
+            return
         # if self.__wait_for_element__(self.selectors['accept_cookies'], 'xpath', 10):
         #     self.__get_element__(
         #         self.selectors['accept_cookies'], 'xpath').click()
