@@ -4,20 +4,20 @@ import sys
 import time
 import shutil
 import json
-import selenium
+import platform
 import PySimpleGUI as sg
-from requests import get
+import selenium
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service as ChromeService
-from subprocess import CREATE_NO_WINDOW
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.keys import Keys
 from webdriver_manager.chrome import ChromeDriverManager as CM
-from getpass import getpass
 
+if platform.system().lower().startswith("win"):
+    from subprocess import CREATE_NO_WINDOW
 
 # FOR TESTING ==================
 # username = ''
@@ -158,7 +158,9 @@ def init(target, quantity, mode):
     options.add_experimental_option("mobileEmulation", mobile_emulation)
 
     chrome_service = ChromeService("chromedriver")
-    chrome_service.creation_flags = CREATE_NO_WINDOW
+
+    if platform.system().lower().startswith("win"):
+        chrome_service.creation_flags = CREATE_NO_WINDOW
 
     bot = webdriver.Chrome(
         executable_path=CM().install(), options=options, service=chrome_service
