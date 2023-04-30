@@ -129,7 +129,7 @@ dmypy.json
 .pyre/
 
 # Exclude Sensitive Information
-data/config/accounts.json
+data/config/account.json
 data/config/messages.txt
 data/*.txt
 
