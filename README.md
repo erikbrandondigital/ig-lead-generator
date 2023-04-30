@@ -7,3 +7,6 @@
      >https://youtu.be/q_PZ5z7H2Hc
 
 This is a private fork of the repo located here: https://github.com/pythontester192/Instagram-Bot-Scrape-DM-Users
+
+# Important Links
+1. Fix for PySimpleGUI Tkinter attribute error on MacOs 13 & greater > https://github.com/fsmosca/Python-Easy-Chess-GUI/issues/41#issuecomment-878709295
