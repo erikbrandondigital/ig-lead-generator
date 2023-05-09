@@ -47,7 +47,7 @@ In the data > config folder:
 - Drag & drop a text file containing a list of usernames from the scraper onto the messenger.py script.
 - Enter the number of accounts you want to DM.
 - Wait for the bot to DM the total number of accounts.
-- After all messages are sent, the lead generator will move the list of users that were messages to a new text file in the data folder. It will append additional usernames to this file when you run the messenger in the future.
+- After all messages are sent, the lead generator will generate separate text files of accounts that were successfully messaged and unsuccessfully messaged. Accounts that were not messaged because they message limit was reached first will remain in the original text file of accounts that was dragged onto the messenger.py script.
 
 # Common Issues & Solutions
 
