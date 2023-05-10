@@ -1,6 +1,6 @@
 # IG-Lead-Generator
 
-This python lead generator can scrape a chosen quantity followers or followings of any target account and send direct messages to IG users. Currently, it runs on Windows & Mac OS.
+This python lead generator can scrape a chosen quantity of followers or followings of any target account and send direct messages to IG users. Currently, it runs on Windows & Mac OS.
 
 # Installation
 
@@ -47,7 +47,7 @@ In the data > config folder:
 - Drag & drop a text file containing a list of usernames from the scraper onto the messenger.py script.
 - Enter the number of accounts you want to DM.
 - Wait for the bot to DM the total number of accounts.
-- After all messages are sent, the lead generator will generate separate text files of accounts that were successfully messaged and unsuccessfully messaged. Accounts that were not messaged because they message limit was reached first will remain in the original text file of accounts that was dragged onto the messenger.py script.
+- After all messages are sent, the lead generator will generate separate text files of accounts that were successfully messaged and unsuccessfully messaged. Accounts that were not messaged because the message limit was reached first will remain in the original text file of accounts that was dragged onto the messenger.py script.
 
 # Common Issues & Solutions
 
