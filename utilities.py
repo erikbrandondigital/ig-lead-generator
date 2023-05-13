@@ -125,12 +125,34 @@ def login(browser, username, password):
 
     try:
         login_button = WebDriverWait(browser, ELEMENTS_TIMEOUT).until(
-            EC.visibility_of_element_located(
-                (By.XPATH, '//*[@id="loginForm"]/div/div[3]/button')
-            )
+            EC.visibility_of_element_located((By.XPATH, '//button[@type="submit"]'))
         )
         login_button.click()
     except:
         raise NoSuchElementException("Unable to find login button or click it.")
 
+    random_sleep(15, 30)
+
+    try:
+        login_info_not_now_button = WebDriverWait(browser, ELEMENTS_TIMEOUT).until(
+            EC.visibility_of_element_located(
+                (By.XPATH, '//div[@role="button" and contains(text(), "Not Now")]')
+            )
+        )
+        login_info_not_now_button.click()
+    except:
+        raise NoSuchElementException("Unable to skip saving login credentials popup.")
+
     random_sleep()
+
+    try:
+        decline_notifications_button = WebDriverWait(browser, ELEMENTS_TIMEOUT).until(
+            EC.visibility_of_element_located(
+                (By.XPATH, '//button[normalize-space()="Not Now"]')
+            )
+        )
+        decline_notifications_button.click()
+    except:
+        raise NoSuchElementException("Unable to decline notifications popup.")
+
+    random_sleep(15, 30)

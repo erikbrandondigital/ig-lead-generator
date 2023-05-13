@@ -4,10 +4,13 @@ import platform
 import sys
 
 import PySimpleGUI as sg
+from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
 from webdriver_manager.chrome import ChromeDriverManager as CM
 
 from selenium import webdriver
@@ -21,8 +24,6 @@ FOLLOW_DATA_LOADING_TIMEOUT = 6
 IG_BASE_URL = "https://www.instagram.com/"
 IG_LOGIN_URL = "https://www.instagram.com/accounts/login/"
 IG_ACCOUNT_URL = "https://www.instagram.com/{}/"
-IG_FOLLOWERS_URL = "https://www.instagram.com/{}/followers/"
-IG_FOLLOWINGS_URL = "https://www.instagram.com/{}/following/"
 
 
 def initGUI():
@@ -40,7 +41,7 @@ def initGUI():
                 "Scrape Followers", key="followers", enable_events=True, disabled=True
             ),
             sg.Button(
-                "Scrape Followings", key="followings", enable_events=True, disabled=True
+                "Scrape Following", key="following", enable_events=True, disabled=True
             ),
             sg.Button("Reset Browser", key="reset", enable_events=True),
             sg.Button("Exit", key="exit"),
@@ -86,16 +87,16 @@ def initGUI():
 
         if input_fields_complete:
             window.find_element("followers").Update(disabled=False)
-            window.find_element("followings").Update(disabled=False)
+            window.find_element("following").Update(disabled=False)
 
         else:
             window.find_element("followers").Update(disabled=True)
-            window.find_element("followings").Update(disabled=True)
+            window.find_element("following").Update(disabled=True)
 
         if event == "reset":
             reset_browser()
 
-        if event == "followers" or event == "followings":
+        if event == "followers" or event == "following":
             window["loading_text"](f"Scraping Target {event.capitalize()}...")
             window.Disable()
 
@@ -148,15 +149,35 @@ def init(target, quantity, mode, username, password):
 
 
 def scrape(browser, target, quantity, mode):
+    ELEMENTS_TIMEOUT = 15
+
     browser.get(IG_ACCOUNT_URL.format(target))
 
     random_sleep()
 
     if quantity > 0:
         if mode == "followers":
-            browser.get(IG_FOLLOWERS_URL.format(target))
+            try:
+                followers_link_xpath = (
+                    f'//a[@role="link" and @href="/{target}/followers/"]'
+                )
+                followers_link = WebDriverWait(browser, ELEMENTS_TIMEOUT).until(
+                    EC.visibility_of_element_located((By.XPATH, followers_link_xpath))
+                )
+                followers_link.click()
+            except:
+                raise NoSuchElementException("Unable to click followers list link.")
         else:
-            browser.get(IG_FOLLOWINGS_URL.format(target))
+            try:
+                following_link_xpath = (
+                    f'//a[@role="link" and @href="/{target}/following/"]'
+                )
+                following_link = WebDriverWait(browser, ELEMENTS_TIMEOUT).until(
+                    EC.visibility_of_element_located((By.XPATH, following_link_xpath))
+                )
+                following_link.click()
+            except:
+                raise NoSuchElementException("Unable to click following list link.")
 
         random_sleep()
 

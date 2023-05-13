@@ -5,7 +5,6 @@ import sys
 from pathlib import Path
 from random import choice
 
-from selenium.common import NoSuchElementException
 from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
@@ -126,39 +125,14 @@ def send_messages(browser):
         random_sleep()
 
         try:
-            account_xpath = f'//span[contains(text(), "{username}")]'
+            account_xpath = (
+                f'//div[@role="button" and .//span[contains(., "{username}")]]'
+            )
             selected_account = WebDriverWait(browser, ELEMENTS_TIMEOUT).until(
                 EC.visibility_of_element_located((By.XPATH, account_xpath))
             )
+            selected_account.click()
         except:
-            handle_cant_find_account(browser, username, usernames_failed)
-            try:
-                close_button = WebDriverWait(browser, ELEMENTS_TIMEOUT).until(
-                    EC.visibility_of_element_located(
-                        (By.XPATH, '(//*[name()="svg"][@aria-label="Close"])[1]')
-                    )
-                )
-                close_button.click()
-                continue
-            except:
-                print("Can't find close button. Unable to continue.")
-                handle_failure_to_send(username, usernames)
-                break
-
-        if selected_account.text == username:
-            try:
-                to_checkbox = WebDriverWait(browser, ELEMENTS_TIMEOUT).until(
-                    EC.visibility_of_element_located(
-                        (By.XPATH, '//button[@class="_abl-"]')
-                    )
-                )
-                to_checkbox.click()
-            except:
-                print("Error: Couldn't select username from lookup.")
-                handle_failure_to_send(username, usernames)
-                break
-        else:
-            print("Error: Username mismatch.")
             handle_cant_find_account(browser, username, usernames_failed)
             try:
                 close_button = WebDriverWait(browser, ELEMENTS_TIMEOUT).until(
