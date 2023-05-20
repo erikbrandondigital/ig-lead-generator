@@ -129,6 +129,10 @@ dmypy.json
 .pyre/
 
 # Exclude Sensitive Information
-infos/accounts.json
-infos/messages.txt
-infos/usernames.txt
+data/config/account.json
+data/config/messages.txt
+data/*.txt
+
+
+# Exclude Chrome Profile Data
+selenium
