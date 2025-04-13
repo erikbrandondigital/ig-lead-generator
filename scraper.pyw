@@ -1,16 +1,15 @@
-#!.venv\Scripts\pythonw
 import os
 import platform
 import sys
 
-import PySimpleGUI as sg
+import FreeSimpleGUI as sg
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support.wait import WebDriverWait
 from webdriver_manager.chrome import ChromeDriverManager as CM
 
 from selenium import webdriver
@@ -27,14 +26,15 @@ IG_ACCOUNT_URL = "https://www.instagram.com/{}/"
 
 
 def initGUI():
+
     layout = [
         [
             sg.Text("Target Account:"),
-            sg.InputText(key="target", enable_events=True),
+            sg.Input(key="target", enable_events=True),
         ],
         [
             sg.Text("Quantity:"),
-            sg.InputText(key="quantity", enable_events=True, default_text="50"),
+            sg.Input(key="quantity", enable_events=True, default_text="50"),
         ],
         [
             sg.Button(
@@ -98,7 +98,7 @@ def initGUI():
 
         if event == "followers" or event == "following":
             window["loading_text"](f"Scraping Target {event.capitalize()}...")
-            window.Disable()
+            # window.disable()
 
             window.perform_long_operation(
                 lambda: init(
@@ -111,7 +111,7 @@ def initGUI():
             window["loading_text"]("")
             window["target"]("")
             window["quantity"]("")
-            window.Enable()
+            # window.enable()
 
 
 def init(target, quantity, mode, username, password):
@@ -216,8 +216,8 @@ def scrape(browser, target, quantity, mode):
     for i in accounts:
         if i.get_attribute("href"):
             c += 1
-            account = i.get_attribute("href").split("/")[3]
             print(i.get_attribute("href"))
+            account = i.get_attribute("href").split("/")[3]
             user_accounts.append(account)
         else:
             continue

@@ -49,6 +49,10 @@ In the data > config folder:
 - Wait for the bot to DM the total number of accounts.
 - After all messages are sent, the lead generator will generate separate text files of accounts that were successfully messaged and unsuccessfully messaged. Accounts that were not messaged because the message limit was reached first will remain in the original text file of accounts that was dragged onto the messenger.py script.
 
+## 7. Run the Liker.
+
+- Coming Soon...
+
 # Common Issues & Solutions
 
 - Fix for PySimpleGUI Tkinter attribute error on MacOs 13 & greater.
